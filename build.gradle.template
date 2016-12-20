@@ -1,0 +1,74 @@
+
+plugins {
+    id 'java'
+    id 'maven'
+    id 'maven-publish'
+    id 'com.jfrog.bintray' version '1.7.1'
+}
+
+jar.archiveName = "vospace-backend.jar"
+
+
+    
+repositories {
+    jcenter()
+    mavenLocal()
+    // Only here until cadcUtil is in jcenter.
+    maven {
+        url  'http://dl.bintray.com/opencadc/software'
+    }
+    maven {
+        url "http://maven.restlet.org"
+    }
+}
+
+sourceCompatibility = 1.7
+
+group = 'it.inaf.oats'
+
+version = '1.0'
+
+dependencies {
+    
+    compile 'log4j:log4j:1.2.+'
+    compile 'com.googlecode.json-simple:json-simple:1.1.1' 
+    compile 'org.json:json:20160212'
+    compile 'org.jdom:jdom:2.0.2'
+    compile 'javax:javaee-web-api:7.0'
+    compile 'commons-io:commons-io:2.5'
+    compile group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2'
+    compile 'commons-codec:commons-codec:1.10'
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.2'
+    compile 'org.apache.httpcomponents:httpcore:4.4.5'
+    compile 'xerces:xercesImpl:2.+'
+    
+    compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'
+   
+    runtime 'org.restlet.jee:org.restlet.ext.servlet:2.3.4'
+    compile 'org.restlet.jee:org.restlet:2.3.6'
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '4.3.2.RELEASE'
+    
+    compile 'org.opencadc:cadc-access-control-identity:1.+'
+    
+    compile 'org.opencadc:cadc-util:1.+'
+    compile 'org.opencadc:cadc-vos:1.+'
+    compile 'org.opencadc:cadc-vos-server:1.+'
+    compile 'org.opencadc:cadc-uws:1.+'
+    compile 'org.opencadc:cadc-uws-server:1.+'
+    runtime 'org.opencadc:cadc-vosi:1.+'
+    runtime 'org.opencadc:cadc-registry:1.+'
+    runtime files('/home/bertocco/netbeans_prjs/oatsrestlet/build/libs/oatsrestlet.jar')
+    /*
+    compile files('/home/bertocco/opt/opencadc/projects/ac/cadc-access-control-identity/build/libs/cadc-access-control-identity.jar')
+    compile files('/home/bertocco/opt/opencadc/projects/uws/cadc-uws-server/build/libs/cadc-uws-server.jar')
+    compile files('/home/bertocco/opt/opencadc/projects/uws/cadc-uws/build/libs/cadc-uws.jar')
+    compile files('/home/bertocco/opt/opencadc/projects/core/cadc-util/build/libs/cadc-util.jar')
+
+    compile files('/home/bertocco/opt/opencadc/projects/vos/cadc-vos/build/libs/cadc-vos.jar')
+    compile files('/home/bertocco/opt/opencadc/projects/vos/cadc-vos-server/build/libs/cadc-vos-server.jar')
+    
+    runtime files('/home/bertocco/opt/opencadc/projects/reg/cadc-vosi/build/libs/cadc-vosi.jar')
+    runtime files('/home/bertocco/opt/opencadc/projects/reg/cadc-registry/build/libs/cadc-registry.jar')
+    runtime files('/home/bertocco/netbeans_prjs/oatsrestlet/build/libs/oatsrestlet.jar')
+    */
+}
