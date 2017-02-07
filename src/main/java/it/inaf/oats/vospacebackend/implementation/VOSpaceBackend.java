@@ -24,6 +24,7 @@
  **/
 package it.inaf.oats.vospacebackend.implementation;
 
+import ca.nrc.cadc.net.TransientException;
 import ca.nrc.cadc.util.FileMetadata;
 import ca.nrc.cadc.vos.DataNode;
 import ca.nrc.cadc.vos.Node;
@@ -83,6 +84,16 @@ public abstract class VOSpaceBackend {
      * @param vosuri
      * @param storedFileID
      * @param md5_sum
+     * @param fileLength is file size in bytes.
+     * double bytes = file.length();
+     * double kilobytes = (bytes / 1024);
+     * double megabytes = (kilobytes / 1024);
+     * double gigabytes = (megabytes / 1024);
+     * double terabytes = (gigabytes / 1024);
+     * double petabytes = (terabytes / 1024);
+     * double exabytes = (petabytes / 1024);
+     * double zettabytes = (exabytes / 1024);
+     * double yottabytes = (zettabytes / 1024);
      * @return 
      * <ul>
      *  <li>
@@ -96,7 +107,7 @@ public abstract class VOSpaceBackend {
      * @throws SQLException
      * @throws IOException 
      */
-    public boolean createFile(String vosuri, String storedFileID, String md5_sum) 
+    public boolean createFile(String vosuri, String storedFileID, String md5_sum, Long fileLength) 
                            throws VOSpaceBackendException, SQLException, IOException {
         
         log.debug("Entering in vospacebackendposix.createfile");
@@ -154,21 +165,27 @@ public abstract class VOSpaceBackend {
                 log.debug("SBE: Checkpint 9A -> myresult = " + result);
                 if(!result) {
                     log.debug("Fails updating table NodeStoredFileAndNode");
+                    FileMetadata fakeNodeMetadata = new FileMetadata();
+                    fakeNodeMetadata.setMd5Sum(md5_sum);
+                    try {
+                       dbNodePers.setFileMetadata(myDataNode, fakeNodeMetadata, false);
+                    } catch(TransientException e) {
+                        throw new VOSpaceBackendException("Unable to update node data and free node");
+                    }
                     throw new VOSpaceBackendException("Node instance NOT found");
                 }   
                 log.debug("SBE: Checkpint 10  -> operation successful");
                 log.debug("SBE: Checkpint 10  -> storedFileID = " + storedFileID);
 
-                log.debug("File metadata successfully saved. I'm going to store the file content");
-                this.fileFromTmpToFinalStorageArea(storedFileID, md5_sum); 
-
                 // Prepare front-end metadata 
                 FileMetadata nodeMetadata = new FileMetadata();
                 nodeMetadata.setMd5Sum(md5_sum);
-            
-                File downloadedFile = new File(storedFileID);
-                nodeMetadata.setContentLength(downloadedFile.length());
-            
+ 
+                log.debug("File size: = " + fileLength);
+                nodeMetadata.setContentLength(fileLength);
+
+                log.debug("File metadata successfully saved. I'm going to store the file content");
+                this.fileFromTmpToFinalStorageArea(storedFileID, md5_sum);             
                 // Store the front-end meta-data 
                 // This operation free the node: Set not busy
                 log.debug("SBE: Checkpint 12 ->  After nodeMetadata.setMd5Sum(md5_sum)");
@@ -215,8 +232,8 @@ public abstract class VOSpaceBackend {
     
         // Gets (from frontend metadata) NodeID from vosuri 
         NodeUtils nodeUtil = new NodeUtils();
+        log.debug("SB: Going to get NodeIdLongfromVosuriStr");
         Long myNodeID = nodeUtil.getNodeIdLongfromVosuriStr(vosuri);
-        
         if (myNodeID == null) {
             log.debug("Problem encountered reading backend node metadata");
             return null;
@@ -238,10 +255,14 @@ public abstract class VOSpaceBackend {
             return null;
         }
         
+        log.debug("SB: Received backendMetadata record = " + backendMetadata.toString());
+        
         Node myNode = nodeUtil.getNodeFromVosuriStr(vosuri);
+        log.debug("SB: Retrieved node given metadata = " + myNode.toString());
         String md5_sum = myNode.getPropertyValue(VOS.PROPERTY_URI_CONTENTMD5);   
         
         String storedFileName = backendMetadata.getStoredfileName(); 
+        log.debug("SB: Stored file name in backend metadata = " + storedFileName);
         
         String outFileName = this.fileFromStorageAreaToTmp(md5_sum, storedFileName);
  

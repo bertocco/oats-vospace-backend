@@ -41,8 +41,8 @@ grant all on YOUR_DB_NAME.* to 'YOUR_DB_USER' identified by 'YOUR_DB_PASSWORD';
 CREATE TABLE StoredFileAndNode
 (    
     storedFileID      varchar(255)         NOT NULL,
-    nodeID            BIGINT(20)           NOT NULL, 
-    fileProperty      varchar(10),
+    nodeID            BIGINT(20)           UNIQUE NOT NULL, 
+    fileProperty      varchar(255),
     PRIMARY KEY (storedFileID)
 ) ENGINE=InnoDB; 
 

@@ -119,6 +119,7 @@ public class ResourceManager implements org.apache.http.HttpStatus {
 
         // Seve the temporary file in temporary location with the new unique name
         File savedUploadedFile = new File(tmpStorageRoot + File.separator + unique_file_id_str);
+        
         log.debug("Writing " + savedUploadedFile + File.separator + unique_file_id_str);
         FileOutputStream outStream = new FileOutputStream(savedUploadedFile);
         try {
@@ -142,7 +143,7 @@ public class ResourceManager implements org.apache.http.HttpStatus {
         }
 
         try {
-            if (storeUploadedFile(vosuri, unique_file_id_str, md5sum)) {
+            if (storeUploadedFile(vosuri, unique_file_id_str, md5sum, savedUploadedFile.length())) {
                 log.debug("File successfully uploaded");
                 result = HttpStatus.SC_OK;
             } else {
@@ -158,7 +159,7 @@ public class ResourceManager implements org.apache.http.HttpStatus {
         return result;
     }
 
-    public static boolean storeUploadedFile(String vosuri, String tmp_file_name, String md5_sum) {
+    public static boolean storeUploadedFile(String vosuri, String tmp_file_name, String md5_sum, Long fileLength) {
         boolean stored = false;
         log.debug("Entering in storeUploadedFile");
         try {
@@ -166,7 +167,7 @@ public class ResourceManager implements org.apache.http.HttpStatus {
             log.debug("myVOSpaceFactory created");
             VOSpaceBackend myVOSpace = myVOSpaceFactory.getVOSpaceBackImpl();
             log.debug("myVOSpace get");
-            stored = myVOSpace.createFile(vosuri, tmp_file_name, md5_sum);
+            stored = myVOSpace.createFile(vosuri, tmp_file_name, md5_sum, fileLength);
             log.debug("File stored: " + stored);
         } catch (Exception e) {
             log.debug("Unrecoverable exception storing file.");
