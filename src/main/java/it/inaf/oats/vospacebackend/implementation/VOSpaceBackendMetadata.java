@@ -117,9 +117,23 @@ public class VOSpaceBackendMetadata {
                                   throws VOSpaceBackendException, SQLException {
        
         String myOp = "SET_REQ";
-        String myQuery = "INSERT INTO cadctest.StoredFileAndNode " +
+        FileRecord backendMetadata = getRequestByNode(nodeID);
+        String myQuery = "";
+        if (backendMetadata == null) {
+            log.debug("Backend metadata not found");
+            backendMetadata.setIfOperationSuccessful(false);
+            return backendMetadata;
+        }
+        if (!backendMetadata.getIfOperationSuccessful()) {
+            myQuery = "INSERT INTO cadctest.StoredFileAndNode " +
                 "(nodeID, storedFileID)" +
                 " VALUES (?, ?);";
+            
+        } else {
+            myQuery = "UPDATE cadctest.StoredFileAndNode SET " +
+                "nodeID = ?, storedFileID = ? WHERE nodeID = '" + nodeID + "';";
+            
+        }
         log.debug("query : " + myQuery);
         FileRecord myParams = new FileRecord();
         myParams.setStoredfileName(stored_f_name);
@@ -195,7 +209,7 @@ public class VOSpaceBackendMetadata {
                         myResult.setNodeId(rs.getString("nodeID"));
                     }
                     if (rowCounter == 0) {
-                        log.debug("GET_REQ: query NOT executed. File metadata not found in backend");                      
+                        log.debug("GET_REQ: File metadata not found in backend");                      
                         ifQuerySuccessful = false;
                     } else {
                         log.debug("GET_REQ: query successfully executed. File found in the backend");
