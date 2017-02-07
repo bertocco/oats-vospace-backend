@@ -1,0 +1,58 @@
+Changelog:
+
+### v0.2 ###
+
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackendMetadata.java
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/utils/NodeUtils.java
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/utils/ResourceManager.java
+#	modified:   src/main/java/sql/create_vospace_backend.sql.template
+
+# src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
+
+Issue: Node saved with file size null. Fixed:
+-    public boolean createFile(String vosuri, String storedFileID, String md5_sum) 
++    public boolean createFile(String vosuri, String storedFileID, String md5_sum, Long fileLength) 
+
+Issue: node was not freed in case of metadata set failure. Fixed:
+                 if(!result) {
+                     log.debug("Fails updating table NodeStoredFileAndNode");
++                    FileMetadata fakeNodeMetadata = new FileMetadata();
++                    fakeNodeMetadata.setMd5Sum(md5_sum);
++                    try {
++                       dbNodePers.setFileMetadata(myDataNode, fakeNodeMetadata, false);
++                    } catch(TransientException e) {
++                        throw new VOSpaceBackendException("Unable to update node data and free node");
++                    }
+
+
+# src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackendMetadata.java
+
+Issue: more stored files for the same node => impossible to retrieve the file given the nodeID. Fixed:
+if node already present in StorageFileAndNode relation table
+then update
+else insert
+
+# src/main/java/it/inaf/oats/vospacebackend/utils/NodeUtils.java
+
+only more debug strings
+
+
+# src/main/java/it/inaf/oats/vospacebackend/utils/ResourceManager.java
+
+Issue: Node saved with file size null. Fixed:
+-    public static boolean storeUploadedFile(String vosuri, String tmp_file_name, String md5_sum) {
++    public static boolean storeUploadedFile(String vosuri, String tmp_file_name, String md5_sum, Long fileLength) {
+
+-            stored = myVOSpace.createFile(vosuri, tmp_file_name, md5_sum);
++            stored = myVOSpace.createFile(vosuri, tmp_file_name, md5_sum, fileLength);
+
+# src/main/java/sql/create_vospace_backend.sql.template
+
+Issue: Node saved with file size null. Fixed:
+-    nodeID            BIGINT(20)           NOT NULL, 
+-    fileProperty      varchar(10),
++    nodeID            BIGINT(20)           UNIQUE NOT NULL, 
++    fileProperty      varchar(255),
+
+
