@@ -1,5 +1,19 @@
 Changelog:
 
+### v0.2.1 ###
+#
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
+#	modified:   src/main/java/it/inaf/oats/vospacebackend/utils/NodeUtils.java
+#
+
+Issue: Node must be locked also in reading/returning operation to be sure no one can
+modify it until reading/returning. Fixed in
+src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
+
+Only more debug strings in
+src/main/java/it/inaf/oats/vospacebackend/utils/NodeUtils.java
+
+
 ### v0.2 ###
 
 #	modified:   src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
