@@ -258,14 +258,62 @@ public abstract class VOSpaceBackend {
         log.debug("SB: Received backendMetadata record = " + backendMetadata.toString());
         
         Node myNode = nodeUtil.getNodeFromVosuriStr(vosuri);
-        log.debug("SB: Retrieved node given metadata = " + myNode.toString());
-        String md5_sum = myNode.getPropertyValue(VOS.PROPERTY_URI_CONTENTMD5);   
+        DataNode myDataNode = (DataNode)myNode;
         
+        log.debug("SB: Retrieved node given metadata = " + myNode.toString());
+        String md5_sum = myNode.getPropertyValue(VOS.PROPERTY_URI_CONTENTMD5); 
+        
+
         String storedFileName = backendMetadata.getStoredfileName(); 
         log.debug("SB: Stored file name in backend metadata = " + storedFileName);
         
-        String outFileName = this.fileFromStorageAreaToTmp(md5_sum, storedFileName);
- 
+        // Needs syncronisation BEGIN
+        // Get operation must be synchronized because no-one can modify the file 
+        // until reading to not have inconsistencies       
+        String outFileName = "";
+        try {
+            synchronized (this) {
+             while ((myDataNode.getBusy() != null) && myDataNode.getBusy().getValue() == "W")
+                wait();
+             // Locks the Node
+             try {     
+                  nodeUtil.dbNodePers.setBusyState(myDataNode, VOS.NodeBusyState.notBusy, VOS.NodeBusyState.busyWithWrite);
+                  log.debug("SBE: returnFile -> after  dbNodePers.setBusyState");
+                } catch (Exception ex) {
+                    log.debug("Exception in dbNodePers.setBusyState");
+                    throw new VOSpaceBackendException("TransientException in dbNodePers.setBusyState");
+                }
+             
+                outFileName = this.fileFromStorageAreaToTmp(md5_sum, storedFileName);
+             
+                // Prepare front-end metadata 
+                FileMetadata nodeMetadata = new FileMetadata();
+                nodeMetadata.setMd5Sum(md5_sum);
+                try {
+                    log.debug("SBE: returnFile -> myDataNode = " + myDataNode + " --- nodeMetadata = " + nodeMetadata);
+                    nodeUtil.dbNodePers.setFileMetadata(myDataNode, nodeMetadata, false);
+                    log.debug("SBE: returnFile -> After dbNodePers.setFileMetadata(myDataNode, nodeMetadata, false)");
+                } catch (Exception ex) {
+                    log.debug("Exception doing databasePersistence.setFileMetadata.");
+                    throw new VOSpaceBackendException("Node instance NOT found");
+                }
+            }
+        } catch (InterruptedException e) {
+            log.debug("SBE: returnFile -> catch executed");
+            log.debug("returnFile -> Exception (A) in dbNodePers.setBusyState(myDataNode, VOS.NodeBusyState.busyWithWrite, VOS.NodeBusyState.notBusy)");
+        } finally {
+            log.debug("SBE: returnFile -> finally executed");
+            if ((myDataNode.getBusy() != null) && myDataNode.getBusy().getValue() == "W") {
+                try {               
+                  nodeUtil.dbNodePers.setBusyState(myDataNode, VOS.NodeBusyState.busyWithWrite, VOS.NodeBusyState.notBusy);
+                } catch (Exception ex) {
+                    log.debug("returnFile -> Exception (B) in setBusyState(myDataNode, VOS.NodeBusyState.busyWithWrite, VOS.NodeBusyState.notBusy)");
+                    throw new VOSpaceBackendException("Unrecoverable error managing the Node");
+                }
+            }
+        }
+        // Needs syncronisation END
+        
         File outFile = null;
         outFile = new File(outFileName);
         
