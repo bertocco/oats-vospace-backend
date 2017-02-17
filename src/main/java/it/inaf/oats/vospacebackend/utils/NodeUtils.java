@@ -37,9 +37,10 @@ public class NodeUtils {
         
         myNode = getNodeFromVosuriStr(vosuri);
         if (myNode != null) {
-            nodeID = (NodeID)myNode.appData;        
+            nodeID = (NodeID)myNode.appData;
             return nodeID.getID();
         } else {
+            log.debug("SB: Going to return null");
             return null;
         }
         
@@ -62,7 +63,7 @@ public class NodeUtils {
             log.debug("URISyntaxException getting node from persistence.");
             log.debug(e.getMessage());
         }
-        
+        log.debug("SB: going to return Node = " + myNode.toString());
         return myNode;
     }
     
