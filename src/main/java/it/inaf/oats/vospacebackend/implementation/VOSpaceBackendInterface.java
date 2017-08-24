@@ -23,23 +23,39 @@
  * _____________________________________________________________________________
  **/
 
-# VOSpace Backend service base URL
-vospacebackend.service.base.url = http://<YOUR_DATABASE_HOST>/VOSpaceBackend/
+package it.inaf.oats.vospacebackend.implementation;
 
 
-# VOSpace  backend Temporary storage area
-fs.posix.tmp.storage.root = /tmp/vospace
+import it.inaf.oats.vospacebackend.exceptions.VOSpaceBackendException;
 
-# VOSpace Backend Implementation to be used
-it.inaf.oats.vospacebackend.implementation.VOSpaceBackendImpl = it.inaf.oats.vospacebackend.implementation.VOSpaceBackPosix
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 
-# VOSpace with posix backend Document Root
-fs.posix.document.root = /home/bertocco/vospace
+/**
+ *
+ * @author bertocco
+ */
+public interface VOSpaceBackendInterface {
+    
+    
+    
+    // The md5 checksum is needed only for posix backend, but it is passed here 
+    // as parameter to avoid to re-read the file (to calculate the checksum) or
+    // to set it previously in the DB. The metadata set operation frees the Node 
+    // so a new setBusyState will be needed
+    public void fileFromTmpToFinalStorageArea(String storedFileID, String md5_sum) throws VOSpaceBackendException ;
+    
+    /**
+     * 
+     * @param vosuri
+     * @param storedFileID
+     * @return the complete file name (path+name) of the temporary location where 
+     * the file is available)
+     * @throws VOSpaceBackendException 
+     */
+    public String fileFromStorageAreaToTmp(String vosuri, String storedFileID) throws VOSpaceBackendException ;
 
-# VOSpace with openstack swift backend parameters
-backend.swift.keystone.auth.url = https://<YOUR_KEYSTONE_HOST>:5000/v2.0
-backend.swift.keystone.username = <YOUR_SWIFT_BACKEND_USER>
-backend.swift.keystone.password = <YOUR_SWIFT_BACKEND_USER_PASSWORD>
-backend.swift.user.domain = <YOUR_DOMAIN_NAME>
-swift.supported.api.version = V2              # V3 not supported
-
+}
