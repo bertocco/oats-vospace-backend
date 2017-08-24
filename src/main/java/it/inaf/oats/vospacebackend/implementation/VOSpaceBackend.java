@@ -32,6 +32,7 @@ import ca.nrc.cadc.vos.VOS;
 import ca.nrc.cadc.vos.VOSURI;
 import ca.nrc.cadc.vos.server.NodeID;
 import it.inaf.oats.vospacebackend.exceptions.VOSpaceBackendException;
+import it.inaf.oats.vospacebackend.utils.ConfigReader;
 import it.inaf.oats.vospacebackend.utils.NodeUtils;
 import java.io.IOException;
 import java.io.File;
@@ -45,11 +46,34 @@ import org.apache.log4j.Logger;
  *
  * @author bertocco
  */
-public abstract class VOSpaceBackend {
+public abstract class VOSpaceBackend implements VOSpaceBackendInterface {
+//public abstract class VOSpaceBackend {
     
 
     private static final Logger log = Logger.getLogger(VOSpaceBackend.class);
     
+    private static final String CONFIG_FILE_NAME = "VOSpace.properties";      
+    private static final String DEFAULT_TMP_STOARGE_ROOT = "/tmp/vospace";
+    protected static String tmpStorageRoot;     
+    
+    public VOSpaceBackend() {
+    
+        try {
+            
+            ConfigReader myConf = new ConfigReader(CONFIG_FILE_NAME);
+        
+            this.tmpStorageRoot = myConf.getProperty("fs.posix.tmp.storage.root"); 
+            log.debug("tmpStorageRoot : " + this.tmpStorageRoot); 
+            
+        } catch (Exception e) {
+            log.debug("Unable to read properties file: " + CONFIG_FILE_NAME);
+            log.debug("Use defaults values : ");
+            log.debug("this.DEFAULT_TMP_STOARGE_ROOT");
+            this.tmpStorageRoot = this.DEFAULT_TMP_STOARGE_ROOT;
+                        
+        }
+        log.debug("Swift VOSpace Backend keystone_auth_url = " + this.tmpStorageRoot); 
+    }
     
     /**
      * Stores the uploaded file. 
@@ -110,7 +134,7 @@ public abstract class VOSpaceBackend {
     public boolean createFile(String vosuri, String storedFileID, String md5_sum, Long fileLength) 
                            throws VOSpaceBackendException, SQLException, IOException {
         
-        log.debug("Entering in vospacebackendposix.createfile");
+        log.debug("Entering in vospacebackend.createfile");
         
         // Creates VOSpaceBackendMetadata to manage back-end meta-data
         VOSpaceBackendMetadata metadata = new VOSpaceBackendMetadata();
@@ -185,7 +209,7 @@ public abstract class VOSpaceBackend {
                 nodeMetadata.setContentLength(fileLength);
 
                 log.debug("File metadata successfully saved. I'm going to store the file content");
-                this.fileFromTmpToFinalStorageArea(storedFileID, md5_sum);             
+                fileFromTmpToFinalStorageArea(storedFileID, md5_sum);             
                 // Store the front-end meta-data 
                 // This operation free the node: Set not busy
                 log.debug("SBE: Checkpint 12 ->  After nodeMetadata.setMd5Sum(md5_sum)");
@@ -321,11 +345,42 @@ public abstract class VOSpaceBackend {
     
     }
     
-    // The md5 checksum is needed only for posix backend, but it is passed here 
+    
+    public String createRelativePathFromMd5checksum(String initialStr) throws VOSpaceBackendException{
+        
+        log.debug("initialStr = " + initialStr);
+        log.debug("initialStr.substring(initialStr.length()-2, initialStr.length())" + initialStr.substring(initialStr.length()-2));
+        log.debug("initialStr.length()-4, initialStr.length()-2)" + initialStr.substring(initialStr.length()-4, initialStr.length()-2)); 
+        
+        String relativePath = null;
+        try{
+            relativePath = new String(File.separator + 
+                              initialStr.substring(initialStr.length()-4, initialStr.length()-2) +                              
+                              File.separator +
+                              initialStr.substring(initialStr.length()-2, initialStr.length()));
+        } catch (Exception e) {
+            log.debug("Exception creating partial path from string " + initialStr);
+            throw new VOSpaceBackendException(e);
+        }
+        log.debug("relative path = " + relativePath);
+        
+        return relativePath;
+        
+    }
+    
+    
+    protected String getTmpPath() {
+        
+        String tmpFilePath = this.tmpStorageRoot + File.separator;
+        return tmpFilePath;
+        
+    }
+
+   // The md5 checksum is needed only for posix backend, but it is passed here 
     // as parameter to avoid to re-read the file (to calculate the checksum) or
     // to set it previously in the DB. The metadata set operation frees the Node 
     // so a new setBusyState will be needed
-    abstract void fileFromTmpToFinalStorageArea(String storedFileID, String md5_sum) throws VOSpaceBackendException ;
+    //public abstract void fileFromTmpToFinalStorageArea(String storedFileID, String md5_sum) throws VOSpaceBackendException ;
     
     /**
      * 
@@ -335,5 +390,5 @@ public abstract class VOSpaceBackend {
      * the file is available)
      * @throws VOSpaceBackendException 
      */
-    abstract String fileFromStorageAreaToTmp(String vosuri, String storedFileID) throws VOSpaceBackendException ;
+    //public abstract String fileFromStorageAreaToTmp(String vosuri, String storedFileID) throws VOSpaceBackendException ;
 }

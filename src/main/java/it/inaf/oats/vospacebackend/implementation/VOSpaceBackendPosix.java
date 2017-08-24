@@ -56,7 +56,6 @@ import org.apache.commons.io.FileUtils;
 public class VOSpaceBackendPosix extends VOSpaceBackend {
     
     private static String documentRoot;
-    private static String tmpStorageRoot;
     private static final String CONFIG_FILE_NAME = "VOSpace.properties";
     private static final Logger log = Logger.getLogger(VOSpaceBackendPosix.class);
     
@@ -65,8 +64,7 @@ public class VOSpaceBackendPosix extends VOSpaceBackend {
         try {
             ConfigReader myConf = new ConfigReader(CONFIG_FILE_NAME);
         
-            this.documentRoot = myConf.getProperty("fs.posix.document.root");     
-            this.tmpStorageRoot = myConf.getProperty("fs.posix.tmp.storage.root"); 
+            this.documentRoot = myConf.getProperty("fs.posix.document.root"); 
         } catch (Exception e) {
             ExceptionMessage exMsg = new ExceptionMessage();
             log.debug(MessageFormat.format(exMsg.getMessage("UNABLE_TO_READ_PROPERTIES"), CONFIG_FILE_NAME));
@@ -75,33 +73,11 @@ public class VOSpaceBackendPosix extends VOSpaceBackend {
             
         }
         log.debug("VOSpace Backend Document Root = " + this.documentRoot);
-        log.debug("VOSpace Backend Temporary Document Root = " + this.tmpStorageRoot);
         
     }
     
-    protected String createRelativePathFromMd5checksum(String initialStr) throws VOSpaceBackendException{
-        
-        log.debug("initialStr = " + initialStr);
-        log.debug("initialStr.substring(initialStr.length()-2, initialStr.length())" + initialStr.substring(initialStr.length()-2));
-        log.debug("initialStr.length()-4, initialStr.length()-2)" + initialStr.substring(initialStr.length()-4, initialStr.length()-2)); 
-        
-        String relativePath = null;
-        try{
-            relativePath = new String(File.separator + 
-                              initialStr.substring(initialStr.length()-4, initialStr.length()-2) +                              
-                              File.separator +
-                              initialStr.substring(initialStr.length()-2, initialStr.length()));
-        } catch (Exception e) {
-            log.debug("Exception creating partial path from string " + initialStr);
-            throw new VOSpaceBackendException(e);
-        }
-        log.debug("relative path = " + relativePath);
-        
-        return relativePath;
-        
-    }
-    
-    protected void fileFromTmpToFinalStorageArea(String tmpfile, String relPath)
+ 
+    public void fileFromTmpToFinalStorageArea(String tmpfile, String relPath)
                                  throws VOSpaceBackendException {
     
         
@@ -116,7 +92,7 @@ public class VOSpaceBackendPosix extends VOSpaceBackend {
                
     }
     
-    protected String fileFromStorageAreaToTmp(String md5_sum, String storedFileName)
+    public String fileFromStorageAreaToTmp(String md5_sum, String storedFileName)
                                  throws VOSpaceBackendException {        
                
         
@@ -220,13 +196,6 @@ public class VOSpaceBackendPosix extends VOSpaceBackend {
         String relativePath = createRelativePathFromMd5checksum(md5_sum);
         String storagePath = this.documentRoot + relativePath + File.separator;
         return storagePath;
-        
-    }
-    
-    protected String getTmpPath() {
-        
-        String tmpFilePath = this.tmpStorageRoot + File.separator;
-        return tmpFilePath;
         
     }
         
