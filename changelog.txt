@@ -1,5 +1,12 @@
 Changelog:
 
+### v0.3 ###
+#
+
+Swift backend plugin added and related architectural changes
+(introduction of VOSpaceBackendInterface and other minor changes).
+Maven compilation in place of gradle (ease openstack4j compilation)
+
 ### v0.2.1 ###
 #
 #	modified:   src/main/java/it/inaf/oats/vospacebackend/implementation/VOSpaceBackend.java
